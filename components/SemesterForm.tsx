@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSemester } from '@/app/actions'
+import { useToast } from './ToastProvider'
 
 type ActionState = { ok: boolean; error?: string }
 
@@ -10,13 +11,16 @@ export default function SemesterForm() {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createSemester as any, { ok: false })
+  const { addToast } = useToast()
 
   useEffect(() => {
     if (state?.ok) {
       router.refresh()
       formRef.current?.reset()
+      addToast({ title: 'Semester added', variant: 'success' })
     }
   }, [state?.ok, router])
+  useEffect(() => { if (state?.error) addToast({ title: state.error, variant: 'error' }) }, [state?.error, addToast])
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-wrap items-end gap-2">
@@ -32,7 +36,7 @@ export default function SemesterForm() {
           <option value="S3">S3</option>
         </select>
       </label>
-      <button className="btn" type="submit" disabled={pending}>{pending ? 'Adding...' : 'Add Semester'}</button>
+      <button className="btn btn-primary" type="submit" disabled={pending}>{pending ? 'Adding...' : 'Add Semester'}</button>
       {state?.error && <span className="text-sm text-red-700">{state.error}</span>}
     </form>
   )

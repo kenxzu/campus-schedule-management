@@ -88,10 +88,10 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
         <td>{effectiveCap}</td>
         <td>
           <div className="flex gap-2">
-            <button className="btn" type="button" onClick={() => setEditing(true)}>Edit</button>
+            <button className="btn btn-ghost" type="button" onClick={() => setEditing(true)}>Edit</button>
             <form action={delAction}>
               <input type="hidden" name="id" value={r.id} />
-              <button className="btn" disabled={delPending}>{delPending ? '...' : 'Delete'}</button>
+              <button className="btn btn-danger" disabled={delPending}>{delPending ? '...' : 'Delete'}</button>
             </form>
             {delState.error && <span className="text-sm text-red-700">{delState.error}</span>}
           </div>
@@ -160,8 +160,8 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
             <input className="input" name="capacityOverride" type="number" min={1} defaultValue={r.capacityOverride ?? ''} />
           </label>
           <div className="flex items-end gap-2 md:col-span-3">
-            <button className="btn" disabled={updPending} type="submit">{updPending ? 'Saving...' : 'Save'}</button>
-            <button className="btn" type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <button className="btn btn-primary" disabled={updPending} type="submit">{updPending ? 'Saving...' : 'Save'}</button>
+            <button className="btn btn-ghost" type="button" onClick={() => setEditing(false)}>Cancel</button>
             {updState.error && <span className="text-sm text-red-700">{updState.error}</span>}
           </div>
         </form>

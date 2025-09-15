@@ -10,8 +10,8 @@ import SemesterList from '../../components/SemesterList'
 import LecturerList from '../../components/LecturerList'
 import SubjectList from '../../components/SubjectList'
 import RoomList from '../../components/RoomList'
-import ScheduleForm from '../../components/ScheduleForm'
-import ScheduleTable from '../../components/ScheduleTable'
+// schedules moved to dedicated route /schedules
+import Collapsible from '../../components/Collapsible'
 
 export default async function ManagePage() {
   const [allSemesters, allLecturers, allSubjects, allRooms] = await Promise.all([
@@ -53,52 +53,49 @@ export default async function ManagePage() {
     <div className="grid gap-6">
       <section className="card">
         <h2 className="section-title">Semesters</h2>
-        <SemesterForm />
-        <SemesterList items={allSemesters} />
+        <Collapsible title="Add Semester" defaultOpen className="mt-3">
+          <SemesterForm />
+        </Collapsible>
+        <Collapsible title="All Semesters" defaultOpen className="mt-3">
+          <SemesterList items={allSemesters} />
+        </Collapsible>
       </section>
 
       <section className="grid gap-6 md:grid-cols-2">
         <div className="card">
           <h2 className="section-title">Lecturers</h2>
-          <LecturerForm />
-          <LecturerList items={allLecturers} />
+          <Collapsible title="Add Lecturer" defaultOpen className="mt-3">
+            <LecturerForm />
+          </Collapsible>
+          <Collapsible title="All Lecturers" defaultOpen className="mt-3">
+            <LecturerList items={allLecturers} />
+          </Collapsible>
         </div>
         <div className="card">
           <h2 className="section-title">Subjects</h2>
-          <SubjectForm />
-          <SubjectList items={allSubjects} />
+          <Collapsible title="Add Subject" defaultOpen className="mt-3">
+            <SubjectForm />
+          </Collapsible>
+          <Collapsible title="All Subjects" defaultOpen className="mt-3">
+            <SubjectList items={allSubjects} />
+          </Collapsible>
         </div>
       </section>
 
       <section className="grid gap-6 md:grid-cols-2">
         <div className="card">
           <h2 className="section-title">Rooms</h2>
-          <RoomForm />
-          <RoomList items={allRooms} />
+          <Collapsible title="Add Room" defaultOpen className="mt-3">
+            <RoomForm />
+          </Collapsible>
+          <Collapsible title="All Rooms" defaultOpen className="mt-3">
+            <RoomList items={allRooms} />
+          </Collapsible>
         </div>
         <div className="card">
           <h2 className="section-title">Schedules</h2>
-          <ScheduleForm
-            semesters={allSemesters}
-            subjects={allSubjects}
-            lecturers={allLecturers}
-            rooms={allRooms}
-            defaultSemesterId={selectedSemesterId}
-          />
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-gray-700">Manage Schedules</h3>
-            {scheduleRows.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-500">No schedules yet.</p>
-            ) : (
-              <ScheduleTable
-                rows={scheduleRows as any}
-                semesters={allSemesters}
-                subjects={allSubjects}
-                lecturers={allLecturers}
-                rooms={allRooms}
-              />
-            )}
-          </div>
+          <p className="text-sm text-gray-600">Manage schedules on the Schedules page.</p>
+          <p className="mt-2 text-sm"><a className="text-gray-900 underline" href="/schedules">Go to Schedules →</a></p>
         </div>
       </section>
     </div>

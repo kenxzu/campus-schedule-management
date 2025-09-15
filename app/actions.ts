@@ -1,8 +1,9 @@
+// placeholder to re-add actions
 "use server"
 
 import { db } from '@/lib/db'
 import { and, eq, lt, gt, ne } from 'drizzle-orm'
-import { dayEnum, lecturers, rooms, schedules, semesters, subjects, termEnum } from '@/db/schema'
+import { dayEnum, lecturers, rooms, schedules, semesters, subjects } from '@/db/schema'
 import { revalidatePath } from 'next/cache'
 
 export async function createSemester(
@@ -44,9 +45,14 @@ export async function createSubject(
 ) {
   const code = String(formData.get('code') || '').trim()
   const name = String(formData.get('name') || '').trim()
-  if (!code || !name) return { ok: false, error: 'Code and name required' }
+  const paidCredit = Number(formData.get('paidCredit') || 0)
+  const academicCredit = Number(formData.get('academicCredit') || 0)
+  const inRange = (n: number) => Number.isFinite(n) && n >= 1 && n <= 4
+  if (!code || !name || !inRange(paidCredit) || !inRange(academicCredit)) {
+    return { ok: false, error: 'Code, name, credits 1-4 required' }
+  }
   try {
-    await db.insert(subjects).values({ code, name }).onConflictDoNothing()
+    await db.insert(subjects).values({ code, name, paidCredit, academicCredit }).onConflictDoNothing()
     revalidatePath('/')
     return { ok: true }
   } catch {
@@ -81,27 +87,42 @@ export async function createSchedule(
   const lecturerId = Number(formData.get('lecturerId'))
   const roomId = Number(formData.get('roomId'))
   const day = String(formData.get('day') || '') as typeof dayEnum.enumValues[number]
-  const startTime = String(formData.get('startTime') || '') // HH:MM
+  const startTime = String(formData.get('startTime') || '')
   const endTime = String(formData.get('endTime') || '')
   const capacityOverrideRaw = formData.get('capacityOverride')
   const capacityOverride = capacityOverrideRaw ? Number(capacityOverrideRaw) : null
 
-  if (
-    !semesterId || !subjectId || !lecturerId || !roomId ||
-    !['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].includes(day) ||
-    !/^\d{2}:\d{2}$/.test(startTime) || !/^\d{2}:\d{2}$/.test(endTime)
-  ) {
-    return { ok: false as const, error: 'Invalid schedule input' }
+  const parseHM = (s: string) => {
+    const parts = s.split(':')
+    if (parts.length < 2) return null
+    const h = Number(parts[0])
+    const m = Number(parts[1])
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null
+    return h * 60 + m
   }
-  if (startTime >= endTime) return { ok: false as const, error: 'Start must be before end' }
-  if (capacityOverride !== null && (!Number.isFinite(capacityOverride) || capacityOverride <= 0)) {
-    return { ok: false as const, error: 'Invalid capacity override' }
+  const toHHMMSS = (s: string) => {
+    const parts = s.split(':')
+    const h = String(parts[0] ?? '').padStart(2, '0')
+    const m = String(parts[1] ?? '').padStart(2, '0')
+    return `${h}:${m}:00`
   }
 
-  // Conflict check: same room, same semester, same day, overlapping time
-  // Overlap when existing.start < newEnd AND existing.end > newStart
-  const endTimeParam = `${endTime}:00`.slice(0, 8)
-  const startTimeParam = `${startTime}:00`.slice(0, 8)
+  if (
+    !semesterId || !subjectId || !lecturerId || !roomId ||
+    !['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].includes(day)
+  ) {
+    return { ok: false, error: 'Invalid schedule input' }
+  }
+  const startMin = parseHM(startTime)
+  const endMin = parseHM(endTime)
+  if (startMin == null || endMin == null) return { ok: false, error: 'Invalid time format' }
+  if (startMin >= endMin) return { ok: false, error: 'Start must be before end' }
+  if (capacityOverride !== null && (!Number.isFinite(capacityOverride) || capacityOverride <= 0)) {
+    return { ok: false, error: 'Invalid capacity override' }
+  }
+
+  const endTimeParam = toHHMMSS(endTime)
+  const startTimeParam = toHHMMSS(startTime)
 
   const overlap = await db
     .select({ id: schedules.id })
@@ -117,10 +138,9 @@ export async function createSchedule(
     )
 
   if (overlap.length > 0) {
-    return { ok: false as const, error: 'Time conflict: room already booked' }
+    return { ok: false, error: 'Time conflict: room already booked' }
   }
 
-  // Optional: prevent lecturer double-booking at same time
   const lecturerOverlap = await db
     .select({ id: schedules.id })
     .from(schedules)
@@ -135,7 +155,7 @@ export async function createSchedule(
     )
 
   if (lecturerOverlap.length > 0) {
-    return { ok: false as const, error: 'Time conflict: lecturer already scheduled' }
+    return { ok: false, error: 'Time conflict: lecturer already scheduled' }
   }
 
   try {
@@ -150,13 +170,12 @@ export async function createSchedule(
       capacityOverride: capacityOverride ?? null
     })
     revalidatePath('/')
-    return { ok: true as const }
+    return { ok: true }
   } catch {
-    return { ok: false as const, error: 'Failed to create schedule' }
+    return { ok: false, error: 'Failed to create schedule' }
   }
 }
 
-// Updates
 export async function updateLecturer(
   _prev: { ok: boolean; error?: string } | undefined,
   formData: FormData
@@ -180,9 +199,14 @@ export async function updateSubject(
   const id = Number(formData.get('id'))
   const code = String(formData.get('code') || '').trim()
   const name = String(formData.get('name') || '').trim()
-  if (!id || !code || !name) return { ok: false as const, error: 'Invalid input' }
+  const paidCredit = Number(formData.get('paidCredit') || 0)
+  const academicCredit = Number(formData.get('academicCredit') || 0)
+  const inRange = (n: number) => Number.isFinite(n) && n >= 1 && n <= 4
+  if (!id || !code || !name || !inRange(paidCredit) || !inRange(academicCredit)) {
+    return { ok: false as const, error: 'Invalid input' }
+  }
   try {
-    await db.update(subjects).set({ code, name }).where(eq(subjects.id, id))
+    await db.update(subjects).set({ code, name, paidCredit, academicCredit }).where(eq(subjects.id, id))
     revalidatePath('/')
     return { ok: true as const }
   } catch {
@@ -245,18 +269,34 @@ export async function updateSchedule(
 
   if (
     !id || !semesterId || !subjectId || !lecturerId || !roomId ||
-    !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day) ||
-    !/^\d{2}:\d{2}$/.test(startTime) || !/^\d{2}:\d{2}$/.test(endTime)
+    !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)
   ) {
     return { ok: false as const, error: 'Invalid schedule input' }
   }
-  if (startTime >= endTime) return { ok: false as const, error: 'Start must be before end' }
+  const parseHM = (s: string) => {
+    const parts = s.split(':')
+    if (parts.length < 2) return null
+    const h = Number(parts[0])
+    const m = Number(parts[1])
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null
+    return h * 60 + m
+  }
+  const toHHMMSS = (s: string) => {
+    const parts = s.split(':')
+    const h = String(parts[0] ?? '').padStart(2, '0')
+    const m = String(parts[1] ?? '').padStart(2, '0')
+    return `${h}:${m}:00`
+  }
+  const startMin = parseHM(startTime)
+  const endMin = parseHM(endTime)
+  if (startMin == null || endMin == null) return { ok: false as const, error: 'Invalid time format' }
+  if (startMin >= endMin) return { ok: false as const, error: 'Start must be before end' }
   if (capacityOverride !== null && (!Number.isFinite(capacityOverride) || capacityOverride <= 0)) {
     return { ok: false as const, error: 'Invalid capacity override' }
   }
 
-  const endTimeParam = `${endTime}:00`.slice(0, 8)
-  const startTimeParam = `${startTime}:00`.slice(0, 8)
+  const endTimeParam = toHHMMSS(endTime)
+  const startTimeParam = toHHMMSS(startTime)
 
   const overlap = await db
     .select({ id: schedules.id })
@@ -312,7 +352,6 @@ export async function updateSchedule(
   }
 }
 
-// Deletes
 export async function deleteLecturer(
   _prev: { ok: boolean; error?: string } | undefined,
   formData: FormData

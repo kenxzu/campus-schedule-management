@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSchedule } from '@/app/actions'
+import { useToast } from './ToastProvider'
 
 type Semester = { id: number; academicYear: string; term: 'S1' | 'S2' | 'S3' }
 type Subject = { id: number; code: string; name: string }
@@ -23,6 +24,7 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createSchedule as any, { ok: false })
+  const { addToast } = useToast()
 
   useEffect(() => {
     if (state?.ok) {
@@ -38,8 +40,10 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
           if (sel) sel.value = semesterId
         }
       }
+      addToast({ title: 'Schedule added', variant: 'success' })
     }
   }, [state?.ok, router])
+  useEffect(() => { if (state?.error) addToast({ title: state.error, variant: 'error' }) }, [state?.error, addToast])
 
   return (
     <form ref={formRef} action={formAction} className="grid gap-3 md:grid-cols-3">
@@ -106,7 +110,7 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
         <input className="input" name="capacityOverride" type="number" min={1} placeholder="leave blank to use room capacity" />
       </label>
       <div className="flex items-end gap-2 md:col-span-3">
-        <button className="btn" type="submit" disabled={pending}>{pending ? 'Adding...' : 'Add Schedule'}</button>
+        <button className="btn btn-primary" type="submit" disabled={pending}>{pending ? 'Adding...' : 'Add Schedule'}</button>
         {state?.error && <span className="text-sm text-red-700">{state.error}</span>}
       </div>
     </form>

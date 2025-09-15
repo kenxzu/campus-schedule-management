@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useActionState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateLecturer, deleteLecturer } from '@/app/actions'
+import { useToast } from './ToastProvider'
 
 type Lecturer = { id: number; name: string }
 type ActionState = { ok: boolean; error?: string }
@@ -23,13 +24,16 @@ function Row({ item }: { item: Lecturer }) {
   const [editing, setEditing] = useState(false)
   const [updState, updAction, updPending] = useActionState<ActionState, FormData>(updateLecturer as any, { ok: false })
   const [delState, delAction, delPending] = useActionState<ActionState, FormData>(deleteLecturer as any, { ok: false })
+  const { addToast } = useToast()
   const editRef = useRef<HTMLFormElement>(null)
   const delRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    if (updState.ok) { setEditing(false); router.refresh() }
-  }, [updState.ok, router])
-  useEffect(() => { if (delState.ok) router.refresh() }, [delState.ok, router])
+    if (updState.ok) { setEditing(false); router.refresh(); addToast({ title: 'Lecturer updated', variant: 'success' }) }
+  }, [updState.ok, router, addToast])
+  useEffect(() => { if (delState.ok) { router.refresh(); addToast({ title: 'Lecturer deleted', variant: 'success' }) } }, [delState.ok, router, addToast])
+  useEffect(() => { if (updState.error) addToast({ title: updState.error, variant: 'error' }) }, [updState.error, addToast])
+  useEffect(() => { if (delState.error) addToast({ title: delState.error, variant: 'error' }) }, [delState.error, addToast])
 
   if (editing) {
     return (
@@ -40,8 +44,8 @@ function Row({ item }: { item: Lecturer }) {
             <span className="label">Name</span>
             <input className="input" name="name" defaultValue={item.name} required />
           </label>
-          <button className="btn" disabled={updPending} type="submit">{updPending ? 'Saving...' : 'Save'}</button>
-          <button className="btn" type="button" onClick={() => setEditing(false)}>Cancel</button>
+          <button className="btn btn-primary" disabled={updPending} type="submit">{updPending ? 'Saving...' : 'Save'}</button>
+          <button className="btn btn-ghost" type="button" onClick={() => setEditing(false)}>Cancel</button>
           {updState.error && <span className="text-sm text-red-700">{updState.error}</span>}
         </form>
       </li>
@@ -52,14 +56,13 @@ function Row({ item }: { item: Lecturer }) {
     <li className="flex items-center justify-between py-2">
       <span>{item.name}</span>
       <div className="flex gap-2">
-        <button className="btn" onClick={() => setEditing(true)} type="button">Edit</button>
+        <button className="btn btn-ghost" onClick={() => setEditing(true)} type="button">Edit</button>
         <form ref={delRef} action={delAction}>
           <input type="hidden" name="id" value={item.id} />
-          <button className="btn" disabled={delPending}>{delPending ? 'Deleting...' : 'Delete'}</button>
+          <button className="btn btn-danger" disabled={delPending}>{delPending ? 'Deleting...' : 'Delete'}</button>
         </form>
         {delState.error && <span className="text-sm text-red-700">{delState.error}</span>}
       </div>
     </li>
   )
 }
-

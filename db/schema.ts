@@ -6,9 +6,10 @@ import {
   time,
   pgEnum,
   unique,
-  timestamp
+  timestamp,
+  check
 } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 export const termEnum = pgEnum('term', ['S1', 'S2', 'S3'])
 export const dayEnum = pgEnum('day_of_week', ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
@@ -17,7 +18,7 @@ export const semesters = pgTable(
   'semesters',
   {
     id: serial('id').primaryKey(),
-    academicYear: varchar('academic_year', { length: 16 }).notNull(), // e.g. 2025/2026
+    academicYear: varchar('academic_year', { length: 16 }).notNull(),
     term: termEnum('term').notNull(),
     createdAt: timestamp('created_at', { withTimezone: false }).defaultNow().notNull()
   },
@@ -44,10 +45,14 @@ export const subjects = pgTable(
     id: serial('id').primaryKey(),
     code: varchar('code', { length: 32 }).notNull(),
     name: varchar('name', { length: 256 }).notNull(),
+    paidCredit: integer('paid_credit').notNull().default(1),
+    academicCredit: integer('academic_credit').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: false }).defaultNow().notNull()
   },
   (t) => ({
-    uniqCode: unique().on(t.code)
+    uniqCode: unique().on(t.code),
+    paidCreditRange: check('subjects_paid_credit_range', sql`${t.paidCredit} >= 1 AND ${t.paidCredit} <= 4`),
+    academicCreditRange: check('subjects_academic_credit_range', sql`${t.academicCredit} >= 1 AND ${t.academicCredit} <= 4`)
   })
 )
 
