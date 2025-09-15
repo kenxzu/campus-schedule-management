@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import ScheduleForm from '../../components/ScheduleForm'
 import ScheduleTable from '../../components/ScheduleTable'
 import Collapsible from '../../components/Collapsible'
+import Reveal from '../../components/Reveal'
 
 type PageProps = { searchParams?: Promise<{ semesterId?: string }> }
 
@@ -46,6 +47,7 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
 
   return (
     <div className="grid gap-6">
+      <Reveal>
       <section className="card">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="section-title">Schedules</h2>
@@ -59,7 +61,7 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
             <button className="btn" type="submit">Go</button>
           </form>
         </div>
-        <Collapsible title="Add Schedule" defaultOpen>
+        <Collapsible title="Add Schedule" defaultOpen className="mt-3">
           <div className="mt-2">
             <ScheduleForm
               semesters={allSemesters}
@@ -70,7 +72,7 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
             />
           </div>
         </Collapsible>
-        <Collapsible title="Manage Schedules" defaultOpen>
+        <Collapsible title="Manage Schedules" defaultOpen className="mt-3">
           <div className="mt-2">
             {scheduleRows.length === 0 ? (
               <p className="mt-2 text-sm text-gray-500">No schedules yet for selected semester.</p>
@@ -80,6 +82,7 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
           </div>
         </Collapsible>
       </section>
+      </Reveal>
     </div>
   )
 }

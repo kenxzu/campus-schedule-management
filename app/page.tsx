@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { schedules, semesters, subjects, lecturers, rooms } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import Reveal from '../components/Reveal'
 
 type PageProps = { searchParams?: Promise<{ semesterId?: string }> }
 
@@ -37,6 +38,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <div className="grid gap-6">
+      <Reveal>
       <section className="card">
         <h2 className="section-title">Select Semester</h2>
         <form className="flex items-center gap-2">
@@ -49,7 +51,9 @@ export default async function Page({ searchParams }: PageProps) {
           <button className="btn" type="submit">Go</button>
         </form>
       </section>
+      </Reveal>
 
+      <Reveal delay={80}>
       <section className="card">
         <h2 className="section-title">Schedules (Read-only)</h2>
         {scheduleRows.length === 0 ? (
@@ -90,7 +94,7 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         )}
       </section>
+      </Reveal>
     </div>
   )
 }
-

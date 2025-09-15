@@ -52,3 +52,17 @@ html, body, :root {
 }
 
 .link { @apply text-blue-700 hover:text-blue-900 underline underline-offset-2; }
+
+/* Appear animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(2px);
+  transition: opacity .45s ease, transform .45s ease, filter .45s ease;
+  will-change: opacity, transform, filter;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: none;
+}

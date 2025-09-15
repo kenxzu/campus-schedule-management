@@ -12,6 +12,7 @@ import SubjectList from '../../components/SubjectList'
 import RoomList from '../../components/RoomList'
 // schedules moved to dedicated route /schedules
 import Collapsible from '../../components/Collapsible'
+import Reveal from '../../components/Reveal'
 
 export default async function ManagePage() {
   const [allSemesters, allLecturers, allSubjects, allRooms] = await Promise.all([
@@ -51,6 +52,7 @@ export default async function ManagePage() {
 
   return (
     <div className="grid gap-6">
+      <Reveal>
       <section className="card">
         <h2 className="section-title">Semesters</h2>
         <Collapsible title="Add Semester" defaultOpen className="mt-3">
@@ -60,7 +62,9 @@ export default async function ManagePage() {
           <SemesterList items={allSemesters} />
         </Collapsible>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="grid gap-6 md:grid-cols-2">
         <div className="card">
           <h2 className="section-title">Lecturers</h2>
@@ -81,7 +85,9 @@ export default async function ManagePage() {
           </Collapsible>
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="grid gap-6 md:grid-cols-2">
         <div className="card">
           <h2 className="section-title">Rooms</h2>
@@ -98,6 +104,7 @@ export default async function ManagePage() {
           <p className="mt-2 text-sm"><a className="text-gray-900 underline" href="/schedules">Go to Schedules →</a></p>
         </div>
       </section>
+      </Reveal>
     </div>
   )
 }
