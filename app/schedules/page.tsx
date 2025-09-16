@@ -51,19 +51,28 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
       <section className="card">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="section-title">Schedules</h2>
-          <form className="flex flex-wrap items-center gap-2">
-            <label className="label">Semester</label>
-            <select className="select w-full sm:w-auto" name="semesterId" defaultValue={selectedSemesterId ? String(selectedSemesterId) : ''}>
-              {allSemesters.map((s) => (
-                <option key={s.id} value={s.id}>{s.academicYear} - {s.term}</option>
-              ))}
-            </select>
-            <button className="btn" type="submit">Go</button>
-          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            <form className="flex flex-wrap items-center gap-2">
+              <label className="label">Semester</label>
+              <select className="select w-full sm:w-auto" name="semesterId" defaultValue={selectedSemesterId ? String(selectedSemesterId) : ''}>
+                {allSemesters.map((s) => (
+                  <option key={s.id} value={s.id}>{s.academicYear} - {s.term}</option>
+                ))}
+              </select>
+              <button className="btn btn-ghost" type="submit">Go</button>
+            </form>
+            {selectedSemesterId > 0 && (
+              <>
+                <a className="btn btn-dark" href={`/api/schedules/export?semesterId=${selectedSemesterId}`}>Export CSV</a>
+                <a className="btn btn-ghost" href={`/api/schedules/export?semesterId=${selectedSemesterId}&format=xls`}>Export Excel</a>
+              </>
+            )}
+          </div>
         </div>
         <Collapsible title="Add Schedule" defaultOpen className="mt-3">
           <div className="mt-2">
             <ScheduleForm
+              key={selectedSemesterId}
               semesters={allSemesters}
               subjects={allSubjects}
               lecturers={allLecturers}

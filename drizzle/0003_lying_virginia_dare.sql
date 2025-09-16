@@ -1,0 +1,1 @@
+ALTER TABLE "schedules" ALTER COLUMN "schedule_date" SET NOT NULL;

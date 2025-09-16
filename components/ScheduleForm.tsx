@@ -16,6 +16,7 @@ type Props = {
   lecturers: Lecturer[]
   rooms: Room[]
   defaultSemesterId: number
+  defaultDate?: string
 }
 
 type ActionState = { ok: boolean; error?: string }
@@ -24,6 +25,22 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createSchedule as any, { ok: false })
+  
+  function onSemesterChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const val = e.target.value
+    try {
+      const url = new URL(window.location.href)
+      const params = url.searchParams
+      params.set('semesterId', val)
+      // preserve selected date
+      const dateEl = (formRef.current?.querySelector('input[name="scheduleDate"]') as HTMLInputElement | null)
+      if (dateEl?.value) params.set('scheduleDate', dateEl.value)
+      router.replace(`${url.pathname}?${params.toString()}`)
+    } catch {
+      // noop
+    }
+  }
+  // removed date persistence since date is not used
   const { addToast } = useToast()
 
   useEffect(() => {
@@ -34,11 +51,20 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
       if (form) {
         const keep = new FormData(form)
         const semesterId = keep.get('semesterId') as string
+        const day = (keep.get('day') as string) || ''
+        const startTime = (keep.get('startTime') as string) || ''
+        const endTime = (keep.get('endTime') as string) || ''
         form.reset()
         if (semesterId) {
           const sel = form.querySelector('select[name="semesterId"]') as HTMLSelectElement | null
           if (sel) sel.value = semesterId
         }
+        const daySel = form.querySelector('select[name="day"]') as HTMLSelectElement | null
+        if (daySel && day) daySel.value = day
+        const startSel = form.querySelector('select[name="startTime"]') as HTMLSelectElement | null
+        if (startSel && startTime) startSel.value = startTime
+        const endSel = form.querySelector('select[name="endTime"]') as HTMLSelectElement | null
+        if (endSel && endTime) endSel.value = endTime
       }
       addToast({ title: 'Schedule added', variant: 'success' })
     }
@@ -49,7 +75,7 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
     <form ref={formRef} action={formAction} className="grid gap-3 md:grid-cols-3">
       <label className="grid text-sm min-w-0">
         <span className="label">Semester</span>
-        <select className="select" name="semesterId" required defaultValue={String(defaultSemesterId)}>
+        <select className="select" name="semesterId" required defaultValue={String(defaultSemesterId)} onChange={onSemesterChange}>
           {semesters.map((s) => (
             <option key={s.id} value={s.id}>
               {s.academicYear} - {s.term}
@@ -95,14 +121,33 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
           ))}
         </select>
       </label>
+      {/* date field removed as requested */}
       <div className="grid gap-2 sm:grid-cols-2 md:col-span-3 min-w-0">
         <label className="grid text-sm min-w-0">
-          <span className="label">Start</span>
-          <input className="input" name="startTime" type="time" required />
+          <span className="label">Start (1–23)</span>
+          <select className="select" name="startTime" required defaultValue={"08:00"}>
+            {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
+              const hh = String(h).padStart(2, '0')
+              return (
+                <option key={hh} value={`${hh}:00`}>
+                  {hh}:00
+                </option>
+              )
+            })}
+          </select>
         </label>
         <label className="grid text-sm min-w-0">
-          <span className="label">End</span>
-          <input className="input" name="endTime" type="time" required />
+          <span className="label">End (1–23)</span>
+          <select className="select" name="endTime" required defaultValue={"10:00"}>
+            {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
+              const hh = String(h).padStart(2, '0')
+              return (
+                <option key={hh} value={`${hh}:00`}>
+                  {hh}:00
+                </option>
+              )
+            })}
+          </select>
         </label>
       </div>
       <label className="grid text-sm min-w-0 md:col-span-3">

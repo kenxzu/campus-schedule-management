@@ -7,7 +7,8 @@ import {
   pgEnum,
   unique,
   timestamp,
-  check
+  check,
+  date
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 
@@ -77,6 +78,7 @@ export const schedules = pgTable(
     subjectId: integer('subject_id').references(() => subjects.id).notNull(),
     lecturerId: integer('lecturer_id').references(() => lecturers.id).notNull(),
     roomId: integer('room_id').references(() => rooms.id).notNull(),
+    scheduleDate: date('schedule_date'),
     day: dayEnum('day').notNull(),
     startTime: time('start_time', { withTimezone: false }).notNull(),
     endTime: time('end_time', { withTimezone: false }).notNull(),
@@ -100,4 +102,3 @@ export const subjectsRelations = relations(subjects, ({ many }) => ({
 export const roomsRelations = relations(rooms, ({ many }) => ({
   schedules: many(schedules)
 }))
-

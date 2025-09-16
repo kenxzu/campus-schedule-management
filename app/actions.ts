@@ -107,10 +107,7 @@ export async function createSchedule(
     return `${h}:${m}:00`
   }
 
-  if (
-    !semesterId || !subjectId || !lecturerId || !roomId ||
-    !['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].includes(day)
-  ) {
+  if (!semesterId || !subjectId || !lecturerId || !roomId || !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)) {
     return { ok: false, error: 'Invalid schedule input' }
   }
   const startMin = parseHM(startTime)
@@ -267,11 +264,11 @@ export async function updateSchedule(
   const capacityOverrideRaw = formData.get('capacityOverride')
   const capacityOverride = capacityOverrideRaw ? Number(capacityOverrideRaw) : null
 
-  if (
-    !id || !semesterId || !subjectId || !lecturerId || !roomId ||
-    !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)
-  ) {
+  if (!id || !semesterId || !subjectId || !lecturerId || !roomId) {
     return { ok: false as const, error: 'Invalid schedule input' }
+  }
+  if (!['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)) {
+    return { ok: false as const, error: 'Invalid day' }
   }
   const parseHM = (s: string) => {
     const parts = s.split(':')

@@ -13,6 +13,7 @@ type Room = { id: number; name: string; capacity: number }
 type RowData = {
   id: number
   day: string
+  scheduleDate?: string | null
   start: string | Date | any
   end: string | Date | any
   capacityOverride: number | null
@@ -137,6 +138,7 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
               ))}
             </select>
           </label>
+          {/* date field removed as requested */}
           <label className="grid text-sm">
             <span className="label">Day</span>
             <select className="select" name="day" defaultValue={String(r.day)} required>
@@ -147,12 +149,30 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
           </label>
           <div className="grid gap-2 sm:grid-cols-2 md:col-span-3 min-w-0">
             <label className="grid text-sm min-w-0">
-              <span className="label">Start</span>
-              <input className="input" name="startTime" type="time" defaultValue={timeFmt(r.start)} required />
+              <span className="label">Start (1–23)</span>
+              <select className="select" name="startTime" required defaultValue={timeFmt(r.start)}>
+                {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
+                  const hh = String(h).padStart(2, '0')
+                  return (
+                    <option key={hh} value={`${hh}:00`}>
+                      {hh}:00
+                    </option>
+                  )
+                })}
+              </select>
             </label>
             <label className="grid text-sm min-w-0">
-              <span className="label">End</span>
-              <input className="input" name="endTime" type="time" defaultValue={timeFmt(r.end)} required />
+              <span className="label">End (1–23)</span>
+              <select className="select" name="endTime" required defaultValue={timeFmt(r.end)}>
+                {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
+                  const hh = String(h).padStart(2, '0')
+                  return (
+                    <option key={hh} value={`${hh}:00`}>
+                      {hh}:00
+                    </option>
+                  )
+                })}
+              </select>
             </label>
           </div>
           <label className="grid text-sm">

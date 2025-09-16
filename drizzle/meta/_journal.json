@@ -15,6 +15,20 @@
       "when": 1757930868692,
       "tag": "0001_nice_apocalypse",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757957115296,
+      "tag": "0002_gifted_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757959115308,
+      "tag": "0003_lying_virginia_dare",
+      "breakpoints": true
     }
   ]
 }
