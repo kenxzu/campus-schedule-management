@@ -31,7 +31,7 @@ export const semesters = pgTable(
 export const lecturers = pgTable(
   'lecturers',
   {
-    id: serial('id').primaryKey(),
+    code: varchar('code', { length: 32 }).primaryKey(),
     name: varchar('name', { length: 128 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: false }).defaultNow().notNull()
   },
@@ -76,15 +76,19 @@ export const schedules = pgTable(
     id: serial('id').primaryKey(),
     semesterId: integer('semester_id').references(() => semesters.id).notNull(),
     subjectId: integer('subject_id').references(() => subjects.id).notNull(),
-    lecturerId: integer('lecturer_id').references(() => lecturers.id).notNull(),
+    lecturerCode: varchar('lecturer_code', { length: 32 }).references(() => lecturers.code).notNull(),
     roomId: integer('room_id').references(() => rooms.id).notNull(),
     scheduleDate: date('schedule_date'),
     day: dayEnum('day').notNull(),
     startTime: time('start_time', { withTimezone: false }).notNull(),
     endTime: time('end_time', { withTimezone: false }).notNull(),
+    classYear: integer('class_year').notNull(),
     capacityOverride: integer('capacity_override'),
     createdAt: timestamp('created_at', { withTimezone: false }).defaultNow().notNull()
-  }
+  },
+  (t) => ({
+    classYearRange: check('schedules_class_year_range', sql`${t.classYear} >= 1000 AND ${t.classYear} <= 9999`)
+  })
 )
 
 export const semestersRelations = relations(semesters, ({ many }) => ({

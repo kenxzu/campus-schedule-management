@@ -25,6 +25,10 @@ export default function LecturerForm() {
   return (
     <form ref={formRef} action={formAction} className="flex items-end gap-2">
       <label className="grid text-sm">
+        <span className="label">Code</span>
+        <input className="input" name="code" placeholder="LCTR001" required />
+      </label>
+      <label className="grid text-sm">
         <span className="label">Name</span>
         <input className="input" name="name" placeholder="Dr. Jane Doe" required />
       </label>

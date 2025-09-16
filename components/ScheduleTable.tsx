@@ -7,7 +7,7 @@ import { updateSchedule, deleteSchedule } from '@/app/actions'
 
 type Semester = { id: number; academicYear: string; term: 'S1'|'S2'|'S3' }
 type Subject = { id: number; code: string; name: string }
-type Lecturer = { id: number; name: string }
+type Lecturer = { code: string; name: string }
 type Room = { id: number; name: string; capacity: number }
 
 type RowData = {
@@ -20,12 +20,13 @@ type RowData = {
   subject: string
   subjectCode: string
   lecturer: string
+  lecturerCode?: string
   room: string
   roomCapacity: number
   subjectId: number
-  lecturerId: number
   roomId: number
   semesterId: number
+  classYear?: number
 }
 
 type ActionState = { ok: boolean; error?: string }
@@ -124,9 +125,9 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
           </label>
           <label className="grid text-sm">
             <span className="label">Lecturer</span>
-            <select className="select" name="lecturerId" defaultValue={String(r.lecturerId)} required>
-              {lecturers.map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
+            <select className="select" name="lecturerCode" defaultValue={(r as any).lecturerCode} required>
+              {lecturers.map((l: any) => (
+                <option key={l.code} value={l.code}>{l.code} — {l.name}</option>
               ))}
             </select>
           </label>
@@ -136,6 +137,28 @@ function Row({ r, semesters, subjects, lecturers, rooms }: { r: RowData; semeste
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>{room.name}</option>
               ))}
+            </select>
+          </label>
+          <label className="grid text-sm">
+            <span className="label">Class Year</span>
+            <select className="select" name="classYear" required defaultValue={(() => {
+              const y = new Date().getFullYear();
+              const before = y - 5;
+              const current = (r as any).classYear as number | undefined;
+              if (!current) return String(y);
+              return String(current <= before ? before : current);
+            })()}>
+              {(() => {
+                const y = new Date().getFullYear();
+                const years = Array.from({ length: 6 }, (_, i) => y - i);
+                const before = y - 5;
+                return [
+                  <option key={`before-${before}`} value={String(before)}>{`≤ ${before}`}</option>,
+                  ...years.map((yy) => (
+                    <option key={yy} value={String(yy)}>{yy}</option>
+                  )),
+                ];
+              })()}
             </select>
           </label>
           {/* date field removed as requested */}

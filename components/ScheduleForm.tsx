@@ -7,7 +7,7 @@ import { useToast } from './ToastProvider'
 
 type Semester = { id: number; academicYear: string; term: 'S1' | 'S2' | 'S3' }
 type Subject = { id: number; code: string; name: string }
-type Lecturer = { id: number; name: string }
+type Lecturer = { code: string; name: string }
 type Room = { id: number; name: string }
 
 type Props = {
@@ -95,10 +95,10 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
       </label>
       <label className="grid text-sm min-w-0">
         <span className="label">Lecturer</span>
-        <select className="select" name="lecturerId" required>
+        <select className="select" name="lecturerCode" required>
           {lecturers.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
+            <option key={l.code} value={l.code}>
+              {l.code} — {l.name}
             </option>
           ))}
         </select>
@@ -153,6 +153,22 @@ export default function ScheduleForm({ semesters, subjects, lecturers, rooms, de
       <label className="grid text-sm min-w-0 md:col-span-3">
         <span className="label">Capacity override (optional)</span>
         <input className="input" name="capacityOverride" type="number" min={1} placeholder="leave blank to use room capacity" />
+      </label>
+      <label className="grid text-sm min-w-0 md:col-span-3">
+        <span className="label">Class Year</span>
+        <select className="select" name="classYear" required defaultValue={String(new Date().getFullYear())}>
+          {(() => {
+            const y = new Date().getFullYear()
+            const years = Array.from({ length: 6 }, (_, i) => y - i)
+            const before = y - 5
+            return [
+              <option key={`before-${before}`} value={String(before)}>{`≤ ${before}`}</option>,
+              ...years.map((yy) => (
+                <option key={yy} value={String(yy)}>{yy}</option>
+              )),
+            ]
+          })()}
+        </select>
       </label>
       <div className="flex items-end gap-2 md:col-span-3">
         <button className="btn btn-primary" type="submit" disabled={pending}>{pending ? 'Adding...' : 'Add Schedule'}</button>

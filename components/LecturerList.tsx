@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation'
 import { updateLecturer, deleteLecturer } from '@/app/actions'
 import { useToast } from './ToastProvider'
 
-type Lecturer = { id: number; name: string }
+type Lecturer = { code: string; name: string }
 type ActionState = { ok: boolean; error?: string }
 
 export default function LecturerList({ items }: { items: Lecturer[] }) {
   return (
     <ul className="mt-3 divide-y divide-gray-100 text-sm text-gray-800">
       {items.map((l) => (
-        <Row key={l.id} item={l} />
+        <Row key={l.code} item={l} />
       ))}
     </ul>
   )
@@ -39,7 +39,7 @@ function Row({ item }: { item: Lecturer }) {
     return (
       <li className="py-2">
         <form ref={editRef} action={updAction} className="flex items-end gap-2">
-          <input type="hidden" name="id" value={item.id} />
+          <input type="hidden" name="code" value={item.code} />
           <label className="grid text-sm">
             <span className="label">Name</span>
             <input className="input" name="name" defaultValue={item.name} required />
@@ -54,11 +54,11 @@ function Row({ item }: { item: Lecturer }) {
 
   return (
     <li className="flex items-center justify-between py-2">
-      <span>{item.name}</span>
+      <span><span className="text-gray-500 mr-2">{item.code}</span>{item.name}</span>
       <div className="flex gap-2">
         <button className="btn btn-ghost" onClick={() => setEditing(true)} type="button">Edit</button>
         <form ref={delRef} action={delAction}>
-          <input type="hidden" name="id" value={item.id} />
+          <input type="hidden" name="code" value={item.code} />
           <button className="btn btn-danger" disabled={delPending}>{delPending ? 'Deleting...' : 'Delete'}</button>
         </form>
         {delState.error && <span className="text-sm text-red-700">{delState.error}</span>}

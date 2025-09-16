@@ -28,10 +28,19 @@ export async function createLecturer(
   _prev: { ok: boolean; error?: string } | undefined,
   formData: FormData
 ) {
+  const code = String(formData.get('code') || '').trim()
   const name = String(formData.get('name') || '').trim()
-  if (!name) return { ok: false, error: 'Name required' }
+  if (!code || !name) return { ok: false, error: 'Code and name required' }
   try {
-    await db.insert(lecturers).values({ name }).onConflictDoNothing()
+    const inserted = await db
+      .insert(lecturers)
+      .values({ code, name })
+      .onConflictDoNothing()
+      .returning({ code: lecturers.code })
+    // If conflict happened, nothing is returned
+    if (inserted.length === 0) {
+      return { ok: false, error: 'Lecturer with same code or name already exists' }
+    }
     revalidatePath('/')
     return { ok: true }
   } catch {
@@ -84,13 +93,15 @@ export async function createSchedule(
 ) {
   const semesterId = Number(formData.get('semesterId'))
   const subjectId = Number(formData.get('subjectId'))
-  const lecturerId = Number(formData.get('lecturerId'))
+  const lecturerCode = String(formData.get('lecturerId') || formData.get('lecturerCode') || '')
   const roomId = Number(formData.get('roomId'))
   const day = String(formData.get('day') || '') as typeof dayEnum.enumValues[number]
   const startTime = String(formData.get('startTime') || '')
   const endTime = String(formData.get('endTime') || '')
   const capacityOverrideRaw = formData.get('capacityOverride')
   const capacityOverride = capacityOverrideRaw ? Number(capacityOverrideRaw) : null
+  const classYearRaw = formData.get('classYear')
+  const classYear = classYearRaw ? Number(classYearRaw) : NaN
 
   const parseHM = (s: string) => {
     const parts = s.split(':')
@@ -107,7 +118,7 @@ export async function createSchedule(
     return `${h}:${m}:00`
   }
 
-  if (!semesterId || !subjectId || !lecturerId || !roomId || !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)) {
+  if (!semesterId || !subjectId || !lecturerCode || !roomId || !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)) {
     return { ok: false, error: 'Invalid schedule input' }
   }
   const startMin = parseHM(startTime)
@@ -117,6 +128,7 @@ export async function createSchedule(
   if (capacityOverride !== null && (!Number.isFinite(capacityOverride) || capacityOverride <= 0)) {
     return { ok: false, error: 'Invalid capacity override' }
   }
+  if (!Number.isFinite(classYear)) return { ok: false, error: 'Invalid class year' }
 
   const endTimeParam = toHHMMSS(endTime)
   const startTimeParam = toHHMMSS(startTime)
@@ -144,7 +156,7 @@ export async function createSchedule(
     .where(
       and(
         eq(schedules.semesterId, semesterId),
-        eq(schedules.lecturerId, lecturerId),
+        eq(schedules.lecturerCode, lecturerCode),
         eq(schedules.day, day),
         lt(schedules.startTime, endTimeParam as any),
         gt(schedules.endTime, startTimeParam as any)
@@ -159,12 +171,13 @@ export async function createSchedule(
     await db.insert(schedules).values({
       semesterId,
       subjectId,
-      lecturerId,
+      lecturerCode,
       roomId,
       day,
       startTime: startTimeParam as any,
       endTime: endTimeParam as any,
-      capacityOverride: capacityOverride ?? null
+      capacityOverride: capacityOverride ?? null,
+      classYear
     })
     revalidatePath('/')
     return { ok: true }
@@ -177,11 +190,11 @@ export async function updateLecturer(
   _prev: { ok: boolean; error?: string } | undefined,
   formData: FormData
 ) {
-  const id = Number(formData.get('id'))
+  const code = String(formData.get('code') || '').trim()
   const name = String(formData.get('name') || '').trim()
-  if (!id || !name) return { ok: false as const, error: 'Invalid input' }
+  if (!code || !name) return { ok: false as const, error: 'Invalid input' }
   try {
-    await db.update(lecturers).set({ name }).where(eq(lecturers.id, id))
+    await db.update(lecturers).set({ name }).where(eq(lecturers.code, code))
     revalidatePath('/')
     return { ok: true as const }
   } catch {
@@ -256,15 +269,17 @@ export async function updateSchedule(
   const id = Number(formData.get('id'))
   const semesterId = Number(formData.get('semesterId'))
   const subjectId = Number(formData.get('subjectId'))
-  const lecturerId = Number(formData.get('lecturerId'))
+  const lecturerCode = String(formData.get('lecturerId') || formData.get('lecturerCode') || '')
   const roomId = Number(formData.get('roomId'))
   const day = String(formData.get('day') || '') as typeof dayEnum.enumValues[number]
   const startTime = String(formData.get('startTime') || '')
   const endTime = String(formData.get('endTime') || '')
   const capacityOverrideRaw = formData.get('capacityOverride')
   const capacityOverride = capacityOverrideRaw ? Number(capacityOverrideRaw) : null
+  const classYearRaw = formData.get('classYear')
+  const classYear = classYearRaw ? Number(classYearRaw) : NaN
 
-  if (!id || !semesterId || !subjectId || !lecturerId || !roomId) {
+  if (!id || !semesterId || !subjectId || !lecturerCode || !roomId) {
     return { ok: false as const, error: 'Invalid schedule input' }
   }
   if (!['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(day)) {
@@ -290,6 +305,9 @@ export async function updateSchedule(
   if (startMin >= endMin) return { ok: false as const, error: 'Start must be before end' }
   if (capacityOverride !== null && (!Number.isFinite(capacityOverride) || capacityOverride <= 0)) {
     return { ok: false as const, error: 'Invalid capacity override' }
+  }
+  if (!Number.isFinite(classYear)) {
+    return { ok: false as const, error: 'Invalid class year' }
   }
 
   const endTimeParam = toHHMMSS(endTime)
@@ -320,7 +338,7 @@ export async function updateSchedule(
       and(
         ne(schedules.id, id),
         eq(schedules.semesterId, semesterId),
-        eq(schedules.lecturerId, lecturerId),
+        eq(schedules.lecturerCode, lecturerCode),
         eq(schedules.day, day),
         lt(schedules.startTime, endTimeParam as any),
         gt(schedules.endTime, startTimeParam as any)
@@ -335,12 +353,13 @@ export async function updateSchedule(
     await db.update(schedules).set({
       semesterId,
       subjectId,
-      lecturerId,
+      lecturerCode,
       roomId,
       day,
       startTime: startTimeParam as any,
       endTime: endTimeParam as any,
-      capacityOverride: capacityOverride ?? null
+      capacityOverride: capacityOverride ?? null,
+      classYear
     }).where(eq(schedules.id, id))
     revalidatePath('/')
     return { ok: true as const }
@@ -353,10 +372,10 @@ export async function deleteLecturer(
   _prev: { ok: boolean; error?: string } | undefined,
   formData: FormData
 ) {
-  const id = Number(formData.get('id'))
-  if (!id) return { ok: false as const, error: 'Invalid id' }
+  const code = String(formData.get('code') || '').trim()
+  if (!code) return { ok: false as const, error: 'Invalid code' }
   try {
-    await db.delete(lecturers).where(eq(lecturers.id, id))
+    await db.delete(lecturers).where(eq(lecturers.code, code))
     revalidatePath('/')
     return { ok: true as const }
   } catch {

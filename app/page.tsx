@@ -27,12 +27,13 @@ export default async function Page({ searchParams }: PageProps) {
           subjectPaidCredit: subjects.paidCredit as any,
           subjectAcademicCredit: subjects.academicCredit as any,
           lecturer: lecturers.name,
+          lecturerCode: schedules.lecturerCode,
           room: rooms.name,
           roomCapacity: rooms.capacity,
         })
         .from(schedules)
         .innerJoin(subjects, eq(schedules.subjectId, subjects.id))
-        .innerJoin(lecturers, eq(schedules.lecturerId, lecturers.id))
+        .innerJoin(lecturers, eq(schedules.lecturerCode, lecturers.code))
         .innerJoin(rooms, eq(schedules.roomId, rooms.id))
         .where(eq(schedules.semesterId, selectedSemesterId))
         .orderBy(schedules.day, schedules.startTime)

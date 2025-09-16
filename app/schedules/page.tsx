@@ -30,16 +30,17 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
           subject: subjects.name,
           subjectCode: subjects.code,
           lecturer: lecturers.name,
+          lecturerCode: schedules.lecturerCode,
           room: rooms.name,
           roomCapacity: rooms.capacity,
           subjectId: schedules.subjectId,
-          lecturerId: schedules.lecturerId,
           roomId: schedules.roomId,
-          semesterId: schedules.semesterId
+          semesterId: schedules.semesterId,
+          classYear: schedules.classYear
         })
         .from(schedules)
         .innerJoin(subjects, eq(schedules.subjectId, subjects.id))
-        .innerJoin(lecturers, eq(schedules.lecturerId, lecturers.id))
+        .innerJoin(lecturers, eq(schedules.lecturerCode, lecturers.code))
         .innerJoin(rooms, eq(schedules.roomId, rooms.id))
         .where(eq(schedules.semesterId, selectedSemesterId))
         .orderBy(schedules.day, schedules.startTime)
@@ -64,7 +65,7 @@ export default async function SchedulesPage({ searchParams }: PageProps) {
             {selectedSemesterId > 0 && (
               <>
                 <a className="btn btn-dark" href={`/api/schedules/export?semesterId=${selectedSemesterId}`}>Export CSV</a>
-                <a className="btn btn-ghost" href={`/api/schedules/export?semesterId=${selectedSemesterId}&format=xls`}>Export Excel</a>
+                <a className="btn btn-ghost" href={`/api/schedules/export?semesterId=${selectedSemesterId}&format=xlsx`}>Export Excel</a>
               </>
             )}
           </div>
